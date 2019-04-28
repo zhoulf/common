@@ -1,0 +1,105 @@
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>sheetjs</title>
+</head>
+<body>
+	<table id="data-table" contenteditable="true" border="1">
+		<tr>
+			<td>w</td>
+			<td>3434</td>
+		</tr>
+	</table>
+
+	<table id="data-table2" contenteditable="true" border="1">
+		<tr>
+			<td>wasdfasdf</td>
+			<td>k看模压</td>
+			<td>2132312</td>
+		</tr>
+	</table>
+
+	<button type="button" onclick="doit('xlsx')">xlsx</button>
+	<button type="button" onclick="bigdata()">bigdata</button>
+	<button type="button" onclick="bigdata2()">bigdata2</button>
+	<button type="button" onclick="worksheets()">worksheets</button>
+
+
+	<script type="text/javascript" src="./lib/shim.min.js"></script>
+	<script type="text/javascript" src="./lib/xlsx.full.min.js"></script>
+
+	<script type="text/javascript" src="./lib/Blob.js"></script>
+	<script type="text/javascript" src="./lib/FileSaver.js"></script>
+	
+	<script>
+	function doit(type, fn, dl) {
+		var elt = document.getElementById('data-table');
+		var wb = XLSX.utils.table_to_book(elt, {sheet:"Sheet JS"});
+		return dl ?
+			XLSX.write(wb, {bookType:type, bookSST:false, type: 'base64'}) :
+			XLSX.writeFile(wb, fn || ('test.' + (type || 'xlsx')));
+	}
+
+	function worksheets() {
+		var table1 = document.getElementById('data-table');
+		var table2 = document.getElementById('data-table2');
+
+		var ws1 = XLSX.utils.table_to_sheet(table1, {sheet: "sheet-1"});
+		var ws2 = XLSX.utils.table_to_sheet(table1, {sheet: "sheet-2"});
+
+		var wb = XLSX.utils.book_new();
+
+		XLSX.utils.book_append_sheet(wb, ws1, 'my-sheet-1');
+		XLSX.utils.book_append_sheet(wb, ws2, 'my-sheet-2');
+
+		XLSX.writeFile(wb, 'multi_ws.xlsx');
+	}
+	</script>
+	<script>
+		function bigdata() {
+			/* original data */
+			var filename = "100001.xlsx";
+			//var data = [[1,2,3],[true, false, null, "sheetjs"],["foo","bar",new Date("2014-02-19T14:30Z"), "0.3"], ["baz", null, "qux"]]
+			var data = [];
+			while(data.length < 100001) data[data.length] = [data.length, data.length+1, data.length+2];
+			var ws_name = "SheetJS";
+			 
+			if(typeof console !== 'undefined') console.log(new Date());
+			var wb = XLSX.utils.book_new(), ws = XLSX.utils.aoa_to_sheet(data);
+			 
+			/* add worksheet to workbook */
+			XLSX.utils.book_append_sheet(wb, ws, ws_name);
+
+			/* write workbook */
+			if(typeof console !== 'undefined') console.log(new Date());
+			XLSX.writeFile(wb, filename);
+			if(typeof console !== 'undefined') console.log(new Date());
+		}
+	</script>
+
+	<script>
+		function bigdata2() {
+			/* original data */
+			var filename = "write_text.xlsx";
+			//var data = [[1,2,3],[true, false, null, "sheetjs"],["foo","bar",new Date("2014-02-19T14:30Z"), "0.3"], ["baz", null, "qux"]]
+			var MAXLEN = 1000;
+			var data = new Array(MAXLEN);
+			var o = new Array(MAXLEN+1).join("ling");
+			for(var dd = 0; dd <=MAXLEN; ++dd) data[dd] = ["foo", o.substr(0,dd), dd+2];
+			var ws_name = "SheetJS";
+			 
+			if(typeof console !== 'undefined') console.log(new Date());
+			var wb = XLSX.utils.book_new(), ws = XLSX.utils.aoa_to_sheet(data);
+			 
+			/* add worksheet to workbook */
+			XLSX.utils.book_append_sheet(wb, ws, ws_name);
+
+			/* write workbook */
+			if(typeof console !== 'undefined') console.log(new Date());
+			XLSX.writeFile(wb, filename);
+			if(typeof console !== 'undefined') console.log(new Date());
+		}
+	</script>
+
+</body>
+</html>
