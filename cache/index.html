@@ -1,0 +1,150 @@
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>cache</title>
+</head>
+<body>
+	<script type="text/javascript">
+	class Storage {
+		constructor() {
+			this._data = {};
+		}
+		get(name) {
+			return this._data[name];
+		}
+		set(name, value) {
+			this._data[name] = value;
+		}
+	};
+
+	class CacheStore {
+		constructor(name) {
+			this.cid = name;
+			this.store = new Storage();
+		}
+		get() {
+			return this.store.get(this.cid);
+		}
+		set(data) {
+			this.store.set(this.cid, data);
+		}
+	}
+
+	function strategy(options) {
+		let defaults = {
+			"type": "expires",
+			"expires": Date.now() + 1000*60*60*24,
+			"maxAge": 31536000,
+			"noStore": function() {
+				return false;
+			}
+		}
+
+		return Object.assign(defaults, options);
+	}
+
+	function initCache(settings, dataPomis, store) {
+
+		var timeCache = {
+			"expires": function() {
+				return new Promise((resolve, reject) => {
+					if (new Date() < settings.expires && store.get()) {
+						console.log('from cache');
+						resolve(store.get());
+					} else {
+						return dataPomis();
+					}
+				})
+			},
+			"maxAge": function() {
+				return new Promise((resolve, reject) => {
+					if (new Date() < Date.now() + settings.maxAge && store.get()) {
+						console.log('from cache');
+						resolve(store.get());
+					} else {
+						return dataPomis();
+					}
+				})
+			}
+		}
+		return function() {
+			if (settings.noStore()) {
+				return dataPomis();
+			}
+			if (timeCache[settings.type]) {
+				return timeCache[settings.type]();
+			}
+
+			console.warn(`cache type: ${setting.type} is not existent!`);
+			return dataPomis();
+		}
+	}
+
+	class Cache {
+		constructor(name, dataPomis, options) {
+			this.store = new CacheStore(name);
+
+			/*
+			 * expires maxAge
+			 * expires: 当前时间小于过期时间expirationDate，直接使用缓存数据
+			 * maxAge: 缓存的内容将在 relativeTime 秒后失效
+			 */
+			// 按优先级从低到高：设置过期时间、相对的过期时间、触发是否过期的事件
+			this._settings = strategy(options);
+
+			// dataSource是一个promise对象
+			this.dataPomisFn = () => {
+				return new Promise((resolve, reject) => {
+					dataPomis().then(
+						data => { 
+							console.log('cache it:' + name);
+							resolve(this.store.set(data)) 
+						},
+						error => reject(errr)
+					);
+				});
+			};
+
+			this.loadFn = initCache(this._settings, this.dataPomisFn, this.store);
+		}
+
+		load() {
+			return this.loadFn();
+		}
+
+		clear() {
+			this.store.set(null);
+		}
+	}
+
+	var ajax = function() {
+		return fetch('https://api.github.com');
+	}
+
+	var userCache = new Cache('user', ajax, { type: 'expires' });
+	userCache.load();
+
+	var menuCache = new Cache('menu', ajax, { type: 'maxAge' });
+	menuCache.load();
+
+	var permisionCache = new Cache('permision', ajax, { noStore() { return true; } });
+	permisionCache.load();
+
+	class SessionCache extends Cache {
+		constructor(name, dataPomis, options) {
+			let noStore = () => Math.random() > 0.5;
+
+			// control是最高优先级的缓存，按默认可缓存1天
+			super(name, dataPomis, { noStore });
+		}
+		clear() {
+			this._settings.noStore = () => true;
+		}
+	}
+
+	var bizCache = new SessionCache('biz', ajax);
+	bizCache.load();
+	
+	</script>
+</body>
+</html>
