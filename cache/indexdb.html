@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Document</title>
+</head>
+<body>
+    <script>
+        var db = null;
+        var DATABASENAME = 'szse';
+        var VERSION = 1;
+
+        var objStroreName = 'user';
+        var columns = [{dataIndex: 'name'}];
+
+        var request = window.indexedDB.open(DATABASENAME, VERSION);
+
+
+        request.onerror = function (event) {
+          console.log('数据库打开报错');
+        };
+
+        request.onsuccess = function (event) {
+          db = request.result;
+          console.log('数据库打开成功');
+        };
+
+        request.onupgradeneeded = function (event) {
+          db = event.target.result;
+
+          var objectStore;
+          if (!db.objectStoreNames.contains(objStroreName)) {
+            // { keyPath: 'id' }
+            objectStore = db.createObjectStore(objStroreName, { autoIncrement: true });
+          }
+
+        };
+
+
+
+        function set(data) {
+          data = { id: 1, name: '张三', age: Math.random()*20, email: 'zhangsan@example.com' };
+          var request = db.transaction([objStroreName], 'readwrite')
+            .objectStore(objStroreName)
+            .put(data);
+
+          request.onsuccess = function (event) {
+            console.log('数据更新成功');
+          };
+
+          request.onerror = function (event) {
+            console.log('数据更新失败');
+          }
+        }
+
+        
+        function read() {
+           var transaction = db.transaction([objStroreName]);
+           var objectStore = transaction.objectStore(objStroreName);
+           var request = objectStore.get(1);
+
+           request.onerror = function(event) {
+             console.log('事务失败');
+           };
+
+           request.onsuccess = function( event) {
+              if (request.result) {
+                console.log(request.result);
+              } else {
+                console.log('未获得数据记录');
+              }
+           };
+        }
+
+    </script>
+
+    <script>
+
+    </script>
+
+    <input type="button" value="set" onclick="set()">
+    <input type="button" value="read" onclick="read()">
+    <input type="button" value="del" onclick="del()">
+
+</body>
+</html>
