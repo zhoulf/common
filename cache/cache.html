@@ -8,7 +8,12 @@
 	<script>
 			IDBStorage.config = {
 				'dataBaseName': 'SMS',
-				
+				'version': 1,
+				'tables': [
+					{ 'tableName': 'userList' },
+					{ 'tableName': 'menuList' },
+					{ 'tableName': 'permisinList' },
+				]
 			}
 
 			IDBStorage.onerror = error => console.log('error');

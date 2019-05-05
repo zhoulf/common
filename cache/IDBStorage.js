@@ -7,9 +7,9 @@ const IDBStorage = function(storeName) {
 
 	let errorFn = IDBStorage.onerror || emptyFn;
 	let successFn = IDBStorage.onsuccess || emptyFn;
-	let config = { 'dataBaseName': 'library', 'version': Date.now() };
+	let config = { 'dataBaseName': 'library', 'version': Date.now(), talbes: [] };
 
-	const { dataBaseName, version } = Object.assign(config, IDBStorage.config);
+	const { dataBaseName, version, tables } = Object.assign(config, IDBStorage.config);
 
 	var request = null;
 	var db = null;
@@ -29,9 +29,10 @@ const IDBStorage = function(storeName) {
 				idb = event.target.result;
 				console.log('onupgradeneeded');
 
-				var objectStore;
-				if (!idb.objectStoreNames.contains(storeName)) {
-					objectStore = idb.createObjectStore(storeName, { autoIncrement: true });
+				for (let t of talbes) {
+					if (!idb.objectStoreNames.contains(t.tableName)) {
+						idb.createObjectStore(t.tableName, { autoIncrement: true });
+					}
 				}
 			}
 		})
