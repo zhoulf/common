@@ -1,0 +1,30 @@
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>IDBStorage</title>
+</head>
+<body>
+	<script src="./IDBStorage.js"></script>
+	<script>
+			IDBStorage.config = {
+				'dataBaseName': 'SMS',
+				
+			}
+
+			IDBStorage.onerror = error => console.log('error');
+			// IDBStorage.onsuccess = () => console.log('success');
+
+			IDBStorage('userList').put({name: 'zhangsan'}).then(d => console.log(d));
+
+			IDBStorage('menuList').put({name: 'items'}).then(d => console.log(d));
+
+			IDBStorage('permisinList').put({
+				id: 1, 
+				f: [{n:1,t:'RW'},{n:2,t:'R'}],
+				m: [{n:1,t:'W'},{n:2,t:'R'}],
+				d: [{n:1,t:'RW'},{n:2,t:'R'}]
+			}).then(d => console.log(d));
+
+	</script>
+</body>
+</html>

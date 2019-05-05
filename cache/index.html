@@ -11,10 +11,10 @@
 			this._data = {};
 		}
 		get(name) {
-			return this._data[name];
+			return Promise.resolve(this._data[name]);
 		}
 		set(name, value) {
-			this._data[name] = value;
+			return Promise.resolve(this._data[name] = value);
 		}
 	};
 
@@ -48,20 +48,20 @@
 
 		var timeCache = {
 			"expires": function() {
-				return new Promise((resolve, reject) => {
-					if (new Date() < settings.expires && store.get()) {
+				return store.get().then(d => {
+					if (new Date() < settings.expires && d) {
 						console.log('from cache');
-						resolve(store.get());
+						return d;
 					} else {
 						return dataPomis();
 					}
 				})
 			},
 			"maxAge": function() {
-				return new Promise((resolve, reject) => {
-					if (new Date() < Date.now() + settings.maxAge && store.get()) {
+				store.get().then(d => {
+					if (new Date() < Date.now() + settings.maxAge && d) {
 						console.log('from cache');
-						resolve(store.get());
+						return d;
 					} else {
 						return dataPomis();
 					}
@@ -95,15 +95,12 @@
 
 			// dataSource是一个promise对象
 			this.dataPomisFn = () => {
-				return new Promise((resolve, reject) => {
-					dataPomis().then(
+				 return dataPomis().then(
 						data => { 
 							console.log('cache it:' + name);
-							resolve(this.store.set(data)) 
-						},
-						error => reject(errr)
+							return this.store.set(data)
+						}
 					);
-				});
 			};
 
 			this.loadFn = initCache(this._settings, this.dataPomisFn, this.store);
@@ -114,7 +111,7 @@
 		}
 
 		clear() {
-			this.store.set(null);
+			return this.store.set(null);
 		}
 	}
 
