@@ -1,0 +1,92 @@
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>angularjs</title>
+</head>
+<body>
+	<script>
+		var angular = (function() {
+			var $inject = {};
+			var $dep = [];
+
+			var factory = (name, injects) => {
+				if (typeof injects === 'function') {
+					injects = [injects];
+				}
+
+				var run = injects.pop();
+				$dep.push($inject[name] = { name, injects, run });
+			};
+
+			/*var orderBy = function(arr, _in = []) {
+				if (!arr.length) return [];
+
+				var _arr = arr.slice();
+				var _que = [], next = [];
+				var _a;
+
+				_a = _arr.filter(a => {
+					if (a.injects.filter(i => !_in.includes(i)).length === 0)
+						return true;
+					
+					next.push(a);
+					return false;
+				});
+
+				_a.forEach(a => {
+					_que.push(a);
+					_in.push(a.name);
+				})
+
+				return _que.concat(next);
+			};*/
+
+			var iteater = ctrl => {
+
+				return ctrl.run.apply(
+					null, 
+					ctrl.injects.map(name => {
+						if ($inject[name].injects.length) {
+							return iteater($inject[name]);
+						} else {
+							return $inject[name].run()
+						}
+					})
+				)
+			}
+
+			return {
+				factory: factory,
+				service: factory,
+				controller: factory,
+				bootstrap(name) {
+					iteater($inject[name])
+				}
+			}
+		})();
+
+		angular.factory('utils', function() {
+			return { format(str) { return str.split('').join('-'); } };
+		});
+
+		angular.service('httpServer1', function() {
+			return { get() { return '111'; } };
+		});
+
+		angular.service('httpServer2', ['httpServer1', function(httpServer1) {
+			return {
+				get() {
+					return httpServer1.get() + '2222';
+				}
+			};
+		}]);
+
+		angular.controller('mainCtrl', ['httpServer2', 'utils', function(httpServer2, utils) {
+			var ret = httpServer2.get();
+			console.log(utils.format(ret));
+		}]);
+
+		angular.bootstrap('mainCtrl');
+	</script>
+</body>
+</html>
