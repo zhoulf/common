@@ -9,7 +9,7 @@
 			var $inject = {};
 			var $dep = [];
 
-			var factory = (name, injects) => {
+			var provider = (name, injects) => {
 				if (typeof injects === 'function') {
 					injects = [injects];
 				}
@@ -56,9 +56,9 @@
 			}
 
 			return {
-				factory: factory,
-				service: factory,
-				controller: factory,
+				factory: provider,
+				service: provider,
+				controller: provider,
 				bootstrap(name) {
 					iteater($inject[name])
 				}
