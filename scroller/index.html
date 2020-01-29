@@ -1,0 +1,177 @@
+<html>
+<head>
+	<meta charset="UTF-8">
+	<title>scroller</title>
+	<style>
+		.container {
+			width: 500px;
+			margin: 80px auto 0;
+		}
+		.wrapper {
+			position:relative;
+			width: 100%;
+			height: 380px;
+			overflow: hidden;
+		}
+		.view {
+			position: absolute;
+			width: 100%;
+			height: 380px;
+			border: 1px solid #678;
+			overflow-y: scroll;
+		}
+		.buffer-view {
+		    position: absolute;
+		    top: 0;
+		    left: 0;
+		    width: 400px;
+		    background: #35a22e;
+		    overflow: hidden;
+		}
+		.buffer-view ul {
+			list-style: none;
+			margin: 0;
+			padding: 0;
+		}
+		.buffer-view li {
+			display: inline-block;
+			width:38px;
+			line-height: 21px;
+			height: 21px;
+			text-align: center;
+		}
+		.actual-domain {
+			height: auto;
+		}
+		.red {
+			color: #f00;
+		}
+
+	</style>
+</head>
+<body>
+	
+	<div class="container">
+		<div class="wrapper">
+			<div class="buffer-view"></div>
+			<div class="view">
+				<div class="actual-domain"></div>
+			</div>
+		</div>
+	</div>
+	<script src="z.js"></script>
+	<script>
+		var count = 2000000; // 数据长度
+		var columnModel = [
+			{ dr: 'val', render: $.noop },
+			{ dr: 'va', render: $.noop },
+			{ dr: 'vb', render: function(v) { return 'wtf'; } },
+			{ dr: 'vc', render: $.noop },
+			{ dr: 'vd', render: function(v) { return '<span class="red">'+v+'</span>'; } },
+			{ dr: 've', render: $.noop }
+		];
+		var data = (function() {
+			var len = count,arr = [];
+			while (len--) {
+				var r = Math.random();
+				arr[len] = { 
+					_rn: len, 
+					val: len+1,
+					va: ~~(r*10),
+					vb: ~~(r*110),
+					vc: ~~(r*120),
+					vd: ~~(r*130),
+					ve: ~~(r*1500)
+				};
+			}; 
+			return arr;
+		})();
+
+		var PREBUFFER = 5; 	// 预缓存10条记录
+		var ROW_HEIGHT = 21;	// 每行元素高度：根据实际取值
+		var PREBUFFER_HEIGHT = PREBUFFER * ROW_HEIGHT; // 前后预缓存元素高度
+		var PREBUFFER_HEIGHT_TWICE = PREBUFFER_HEIGHT * 2;	// 前后预缓存之和高度
+
+		var VIEW_HEIGHT = $('.view').height();	// 可视区视图高度
+		var bufferView = $('.buffer-view').height($.nearestModulo(VIEW_HEIGHT, ROW_HEIGHT) +  PREBUFFER_HEIGHT*2);
+
+		var ACTUALDOMAIN_HEIGHT = data.length * ROW_HEIGHT;	// 实际计算区域高度
+		var size = bufferView.height() / ROW_HEIGHT;
+		var actualView = $('.actual-domain').height(ACTUALDOMAIN_HEIGHT);
+
+		var clientView = $('.view');
+
+		clientView.on('scroll', function(evt) {
+			var offset = $(this).offset();
+			var bottom = ACTUALDOMAIN_HEIGHT - offset.top - VIEW_HEIGHT;
+			var top = 0;
+			
+			if (offset.top < PREBUFFER_HEIGHT) {
+				top = -offset.top;
+			} else if (bottom < PREBUFFER_HEIGHT) {
+				top	= bottom - PREBUFFER_HEIGHT_TWICE;		
+			} else {
+				top = -PREBUFFER_HEIGHT;
+			}
+
+			bufferView.css({ top: top });
+
+			var domain = range(offset.top, offset.top + VIEW_HEIGHT+PREBUFFER_HEIGHT_TWICE);
+
+			if (offset.top + PREBUFFER_HEIGHT_TWICE + VIEW_HEIGHT <= ACTUALDOMAIN_HEIGHT) {
+				bufferView.setData(data.slice(domain[0], domain[1]), columnModel);
+			} else {
+				bufferView.setData(data.slice(-size), columnModel);
+			}
+		});
+
+		function range(start, end) {
+			return [
+				$.nearestModulo(start, ROW_HEIGHT) /ROW_HEIGHT,
+				$.nearestModulo(end, ROW_HEIGHT) /ROW_HEIGHT
+			];
+		}
+
+		bufferView.append('ul', size);
+		bufferView.setData(data.slice(0, size), columnModel);
+
+		clientView.notKeyDown = true;
+		actualView.on('mousedown', function(evt) {
+			clientView.notKeyDown = false;
+		});
+
+		actualView.on('mouseup', function(evt) {
+			clientView.notKeyDown = true;
+		});
+
+		var timer = null;
+		clientView.on('mousemove', function(evt) {
+			
+			if (clientView.notKeyDown) {
+				return;
+			}
+			// $.log(evt.type, evt.layerY, evt.offsetY, evt.clientY);
+
+			var offset = evt.layerY - (VIEW_HEIGHT >> 1);
+
+			clearInterval(timer);
+			if (offset !== 0) {
+				timer = setInterval(function() {
+					var top = clientView.offset().top;
+					$.log(evt.layerY, VIEW_HEIGHT>>1);
+					if (top === 0 
+						|| clientView.notKeyDown
+						|| ACTUALDOMAIN_HEIGHT - top - VIEW_HEIGHT < PREBUFFER_HEIGHT) {
+						clearInterval(timer);
+					}
+					clientView.scrollTop(offset + clientView.offset().top);	
+				}, 120);
+			}
+			
+		});
+
+
+
+	</script>
+</body>
+</html>

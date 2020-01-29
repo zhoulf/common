@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>child</title>
+    <style>
+        body { background-color: black;}
+        .sms-txt { font-size:8em;position: fixed; }
+        .s1-txt { 
+            animation:sprocess 5s infinite;
+            -webkit-animation:sprocess 5s infinite;
+        }
+        .m-txt { 
+            animation:mprocess 5s infinite;
+            -webkit-animation:mprocess 5s infinite;
+         }
+        .s2-txt { 
+            animation:s2process 5s infinite;
+            -webkit-animation:s2process 5s infinite;
+         }
+
+        @keyframes sprocess {
+            0% {
+                color: #fff;
+            }
+            
+            100% {
+                color: #f00;
+            }
+        }
+        @keyframes mprocess {
+            0% {
+                color: #fff;
+            }
+            
+            100% {
+                color: #0f0;
+            }
+        }
+        @keyframes s2process {
+            0% {
+                color: #fff;
+            }
+            
+            100% {
+                color: #00f;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="sms-txt">
+        <span class="s1-txt">S</span>
+        <span class="m-txt">M</span>
+        <span class="s2-txt">S</span>
+    </div>
+
+
+</body>
+
+</html>

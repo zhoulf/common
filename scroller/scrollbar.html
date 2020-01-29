@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>scrollbar</title>
+    <style type="text/css">
+        body {
+            height: 9999px;
+        }
+        /*chrome滚动条颜色设置*/
+        .viewpoint::-webkit-scrollbar {
+            width: 0;
+            background-color: transparent;
+        }
+        
+        /*定义滚动条高宽及背景 高宽分别对应横竖滚动条的尺寸*/
+        .viewpoint::-webkit-scrollbar-track {
+            background-color: #f0f6ff;
+        }
+        /*定义滚动条轨道 内阴影+圆角*/
+        .viewpoint::-webkit-scrollbar-thumb {
+            background-color: #605CA8;
+            border-radius: 0;
+        }
+
+        /*定义滑块 内阴影+圆角*/
+        .scrollbarHide::-webkit-scrollbar {
+            display: none
+        }
+        .scrollbarShow::-webkit-scrollbar {
+            display: block
+        }
+
+
+		.viewpoint {
+            position: relative;
+			margin: 20px auto;
+			width: 380px;
+			height: 301px;
+			border: 1px solid #333;
+			overflow-y:auto;
+		}
+		.canvas {
+			position: relative;
+			height: auto;
+		}
+		.row {
+			position: absolute;
+			height: 28px;
+			line-height: 28px;
+            background-color: aquamarine;
+		}
+
+        /* scrollbar */
+        .scrollbar {
+            opacity: 0;
+            transition: opacity 2s;
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 14px;
+            height: 30px;
+            background-color: blueviolet;
+        }
+
+        .scrollbar:hover {
+            /* width: 16px; */
+        }
+
+        .viewpoint:hover .scrollbar {
+            opacity: 1;
+        }
+	</style>
+</head>
+<body>
+    
+    <!-- viewpoint -->
+	<div class="viewpoint">
+        <!-- canvas -->
+        <div class="canvas"></div>
+        <!-- scrollbar -->
+        <div class="scrollbar"></div>
+    </div>
+    
+    <div class="log"></div>
+    
+    <script src="jquery.js"></script>
+	<script>
+		var lineHeight = 28;
+		var viewpointHeight = $('.viewpoint').height();
+		var data = new Array(909).fill(0).map((d, i) => ({ v: i }));
+		var limit = Math.min(Math.ceil(viewpointHeight/ lineHeight) - 1, data.length - 1);
+
+		$('.canvas').height(lineHeight * data.length);
+
+		var buffer = {
+			start: 0,
+			end: limit,
+			limit: limit,
+			total: data.length,
+			domain:[0, limit],
+			isAmong(index) {
+				return buffer.start <= index && index <= buffer.end;
+			},
+			preLoad(dir, current) {
+				if (dir === 0) return false;
+
+				var start = buffer.start;
+				var end = buffer.end;
+				var cacheTwice = 3;
+
+				// scroll up
+				if (dir < 0 && start === 0) return false;
+				if (dir < 0 && current < Math.max(0, start + buffer.limit)) {
+					if (buffer.isAmong(current)) {
+						end = start - 1;
+						start = Math.max(0, end - buffer.limit);
+					} else {
+						end = current + buffer.limit;
+						start = Math.max(0, current - 2 * buffer.limit);
+						// cacheTwice = 2;
+					}
+
+					buffer.domain = [start, end];
+					buffer.start = start;
+					buffer.end = Math.min(start + cacheTwice * buffer.limit, buffer.end);
+					return true;
+				} 
+
+				// scroll down
+				if (dir > 0 && end === buffer.total) return false;
+				if (dir > 0 && current > end - buffer.limit) {
+					if (buffer.isAmong(current)) {
+						start = end + 1;
+						end = Math.min(buffer.total, start + buffer.limit); 
+					} else {
+						start = current - buffer.limit;
+						end = Math.min(buffer.total, current + 2 * buffer.limit);
+						// cacheTwice = 2;
+					}
+
+					buffer.domain = [start, end];
+					buffer.end = end;
+					buffer.start = Math.max(buffer.start, end - cacheTwice * buffer.limit);
+					return true;
+				}
+				
+				return false;
+			}
+		};
+		var scroller = { 
+			dir: 0, // -1,0,-1
+			preIndex: 0,
+			index: 0,
+			on(fn) {
+				this.fn = function(offsetTop) {
+                    console.info(offsetTop);
+
+					log('current', offsetTop);
+					scroller.dir = offsetTop - scroller.preIndex;
+					scroller.index = ~~((scroller.preIndex = offsetTop)/ lineHeight);
+					if (buffer.preLoad(scroller.dir, scroller.index)) {
+						fn(
+							scroller.dir > 0 ? 1 : -1, 
+							buffer.domain, 
+							buffer.start, 
+							buffer.end, 
+							scroller.index,
+							buffer.total
+						);
+					}
+				};
+			}, 
+			fire() {this.fn.apply(this, arguments);} 
+		};
+
+		var dataView = {
+			nodeList: [],
+			init() {
+				var domain = buffer.domain;
+				dataView.render(1, domain);
+			},
+			fullNodes() {
+				return dataView.nodeList.length >= 3 * limit;
+			},
+			getNodes(dir, first, last) {
+				if (dataView.fullNodes()) {
+					let selected;
+
+					if (dir > 0) {
+						selected = dataView.nodeList.slice(0, last - first + 1);
+						dataView.nodeList = dataView.nodeList.slice(last - first + 1).concat(selected);
+						
+					} else {
+						selected = dataView.nodeList.slice(first - last - 1);
+						dataView.nodeList = selected.concat(dataView.nodeList.slice(0, first - last - 1));
+					}
+					
+					return selected;
+				}
+				
+				var nodes = [];
+				for (let i = first; i <= last; i++) {
+					 nodes.push(function() {
+					 	 var $node = $('<div/>').addClass('row');
+
+					 	 return {
+					 	 	src: $node,
+					 	 	set(row, top) {
+						 	 	return $node.css('top', top * lineHeight).text(row.v);
+						 	}
+					 	 };
+					 }());
+				}
+
+				if (dir > 0) {
+					dataView.nodeList = dataView.nodeList.concat(nodes);
+				} else {
+					dataView.nodeList = nodes.concat(dataView.nodeList);
+				}
+
+				return nodes;
+			},
+			render(dir, [first, last]) {
+				var nodes = dataView.getNodes(dir, first, last);
+				console.log(nodes.length);
+
+				if (dataView.isFullNodes) {
+					data.slice(first, last + 1).forEach((row, i) => {
+						nodes[i].set(row, first + i);
+					});
+
+					return;
+				}
+				var parent = $('<div/>');
+
+				data.slice(first, last + 1).forEach((row, i) => {
+					parent.append(nodes[i].set(row, first + i));
+				});
+
+				$('.canvas').append(parent.children());
+
+				if (dataView.fullNodes()) {
+					dataView.isFullNodes = true;
+				}		
+			}
+		};
+        
+		$('.viewpoint').on('scroll', function(evt) {
+			// console.log(this.scrollTop);
+            scroller.fire(this.scrollTop);
+
+            var scrollBarOffsetTop = buffer.start/ buffer.total * viewpointHeight;
+            $('.scrollbar').css('top', this.scrollTop + scrollBarOffsetTop);
+		});
+
+		scroller.on(function(dir, domain, start, end, offsetTop, total) {
+			console.log(`${dir}, add:[${domain}] [${start}-${end}], ${offsetTop}, nodes:${dataView.nodeList.length}`);
+			dataView.render(dir, domain);
+		});
+
+		dataView.init();
+
+
+		var $log = document.querySelector('.log');
+		function log(...args) {
+			$log.innerHTML = args;
+        }
+        
+        $('.scrollbar')
+            .on('mousedown', function(evt) {
+                $(document).on('mousemove.scrollbar', function(evt) {
+                    var scrollBarOffsetTop = (evt.clientY - 30)/ viewpointHeight * lineHeight * data.length;
+                    $('.viewpoint').scrollTop(scrollBarOffsetTop);
+                }).on('mouseup.scrollbar', function(evt) {
+                    console.log('mouseup');
+                    $(document).off('mousemove.scrollbar mouseup.scrollbar');
+                });
+            });
+	</script>
+</body>
+</html>

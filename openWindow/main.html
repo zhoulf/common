@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>main</title>
+</head>
+<body>
+    <ul>
+        <li><a href="/openWindow/child.html" target="_blank" rel="noopener noreferrer">child_1</a></li>
+        <li><a href="/openWindow/child.html" target="_blank" rel="noopener noreferrer">child_1</a></li>
+        <li><a href="/openWindow/child.html" target="_blank" rel="noopener noreferrer">child_1</a></li>
+        <li><a href="/openWindow/child.html" target="_blank" rel="noopener noreferrer">child_1</a></li>
+        <li><a href="/openWindow/child.html" target="_blank" rel="noopener noreferrer">child_1</a></li>
+        <li><span onclick="openWin()">open child</span></li>
+        <li><span onclick="openA()">open A</span></li>
+    </ul>
+
+    <script>
+        window.mainObj = { name: 'parent', data: [{name: 'a', value: 1}]};
+        window.sessionStorage.setItem('mainObj', JSON.stringify(window.mainObj));
+        function openWin() {
+            var childWin = window.open('/openWindow/child.html');
+                childWin.opener = null;
+        }
+    </script>
+
+    <script>
+    function openA(filename, text) {
+        var element = document.createElement('a');
+        element.setAttribute('href', '/openWindow/child.html');
+        element.setAttribute('target', '_blank');
+        element.setAttribute('rel', "noopener noreferrer");
+
+        element.style.display = 'none';
+        document.body.appendChild(element);
+
+        element.click();
+
+        document.body.removeChild(element);
+        }
+    </script>
+</body>
+</html>
