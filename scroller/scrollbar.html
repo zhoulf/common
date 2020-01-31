@@ -11,19 +11,19 @@
         }
         /*chrome滚动条颜色设置*/
         .viewpoint::-webkit-scrollbar {
-            width: 10px; /*方便对比调试*/
-			height: 10px;
+            /* width: 10px; */
+			/* height: 10px; */
             width: 0;
 			height: 0;
-            background-color: transparent;
+            /* background-color: transparent; */
         }
         
         /*定义滚动条高宽及背景 高宽分别对应横竖滚动条的尺寸*/
-        .viewpoint::-webkit-scrollbar-track {
+        .viewpoint::-webkit-y-scrollbar-track {
             background-color: #f0f6ff;
         }
         /*定义滚动条轨道 内阴影+圆角*/
-        .viewpoint::-webkit-scrollbar-thumb {
+        .viewpoint::-webkit-y-scrollbar-thumb {
             background-color: #605CA8;
             border-radius: 0;
         }
@@ -58,39 +58,59 @@
 		}
 
         /* scrollbar */
-        .scrollbar {
+		.scrollbar {
 			opacity: 0;
             transition: opacity 2s;
             position: absolute;
+		}
+		
+		.scrollbar-track {
+			position: relative;
+			background-color: black;
+			opacity: .3;
+		}
+		.scrollbar-thumb {
+			position: absolute;
+            background-color: #666;
+		}
+		.viewpoint:hover .scrollbar {
+            opacity: 1;
+        }
+		.scrollbar:hover .scrollbar-track {
+            opacity: .3;
+		}
+
+		.y-scrollbar {
             top: 0;
             right: 0;
             width: 14px;
             height: 100%;
         }
-
-
-		.scrollbar-track {
-			position: relative;
-			background-color: black;
-			opacity: .3;
+		.y-scrollbar .scrollbar-track {
 			width: 100%;
 			height: 100%;
 		}
-
-		.scrollbar-thumb {
-			position: absolute;
+		.y-scrollbar .scrollbar-thumb {
 			top: 0;
 			width: 100%;
 			height: 30px;
-            background-color: #666;
 		}
-
-        .viewpoint:hover .scrollbar {
-            opacity: 1;
+		
+		.x-scrollbar {
+            left: 0;
+            bottom: 0;
+            width: 100%;
+            height: 14px;
         }
-		.scrollbar:hover .scrollbar-track {
-            opacity: .3;
-        }
+		.x-scrollbar .scrollbar-track {
+			width: 100%;
+			height: 100%;
+		}
+		.x-scrollbar .scrollbar-thumb {
+			top: 0;
+			width: 30px;
+			height: 100%;
+		}
 	</style>
 </head>
 <body>
@@ -100,18 +120,18 @@
         <!-- canvas -->
         <div class="canvas"></div>
         <!-- scrollbar -->
-        <div class="scrollbar">
-			<div class="scrollbar-track">
-			</div>
-			<div class="scrollbar-thumb"></div>
-		</div>
+        <!-- <div class="y-scrollbar">
+			<div class="y-scrollbar-track"></div>
+			<div class="y-scrollbar-thumb"></div>
+		</div> -->
     </div>
     
     <div class="log"></div>
     
-    <script src="jquery.js"></script>
+	<script src="jquery.js"></script>
+	<script src="scrollbar.js"></script>
 	<script>
-		var total = 909;
+		var total = 19;
 		var lineHeight = 28;
 		var viewpointHeight = $('.viewpoint').height();
 		var data = new Array(total).fill(0).map((d, i) => ({ v: i }));
@@ -120,10 +140,8 @@
 
 		$('.canvas').height(contentHeight);
 
-		var thumbHeight = viewpointHeight <= contentHeight 
-			? Math.max(viewpointHeight * viewpointHeight / contentHeight, 30)
-			: viewpointHeight;
-		$('.scrollbar-thumb').height(thumbHeight);
+		var yScroll = ScrollBar.createYBar($('.viewpoint'));
+		var xScroll = ScrollBar.createXBar($('.viewpoint'));
 
 		var buffer = {
 			start: 0,
@@ -186,7 +204,7 @@
 			index: 0,
 			on(fn) {
 				this.fn = function(scrollTop) {
-                    console.info(`scrollTop ${scrollTop}/ ${contentHeight}`);
+                    console.info(`scrollTop ${scrollTop}`);
 
 					log('current', scrollTop);
 					scroller.dir = scrollTop - scroller.preIndex;
@@ -211,6 +229,7 @@
 			init() {
 				var domain = buffer.domain;
 				dataView.render(1, domain);
+				xScroll.update();
 			},
 			fullNodes() {
 				return dataView.nodeList.length >= 3 * limit;
@@ -281,16 +300,12 @@
 		$('.viewpoint').on('scroll', function(evt) {
 			// console.log(this.scrollTop);
             scroller.fire(this.scrollTop);
-
-            var thumbOffsetTop = this.scrollTop/ (contentHeight - viewpointHeight) * (viewpointHeight - thumbHeight);
-			console.log(`>>thumbOffsetTop ${thumbOffsetTop}/ ${viewpointHeight}`);
-			$('.scrollbar').css('top', this.scrollTop);
-            $('.scrollbar-thumb').css('top', thumbOffsetTop);
 		});
 
 		scroller.on(function(dir, domain, start, end, offsetTop, total) {
 			// console.log(`${dir}, add:[${domain}] [${start}-${end}], ${offsetTop}, nodes:${dataView.nodeList.length}`);
 			dataView.render(dir, domain);
+			xScroll.update();
 		});
 
 		dataView.init();
@@ -301,27 +316,7 @@
 			$log.innerHTML = args;
         }
         
-        $('.scrollbar-thumb')
-            .on('mousedown', function(evt) {
-
-                $(document).on('mousemove.scrollbar', function(evt) {
-                    var scrollBarOffsetTop = (evt.clientY - thumbHeight)/ viewpointHeight * contentHeight;
-                    $('.viewpoint').scrollTop(scrollBarOffsetTop);
-
-                }).on('mouseup.scrollbar', function(evt) {
-                    // console.log('mouseup');
-                    $(document).off('mousemove.scrollbar mouseup.scrollbar');
-                });
-
-				evt.stopPropagation();
-				evt.preventDefault();
-				return false;
-            });
-
-		$('.scrollbar-track').on('mousedown', function(evt) {
-			var top = (evt.clientY - thumbHeight)/ viewpointHeight * contentHeight;
-			$('.viewpoint').scrollTop(top);
-		});
+        
 	</script>
 </body>
 </html>
