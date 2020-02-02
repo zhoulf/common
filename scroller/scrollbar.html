@@ -28,6 +28,18 @@
             border-radius: 0;
         }
 
+		/* iframe resize*/
+		.resizer {
+			z-index: -999;
+			position: absolute;
+			top: 0;
+			left: 0;
+			right: 0;
+			bottom: 0;
+			width: 100%;
+			height: 100%;
+		}
+
         /*定义滑块 内阴影+圆角*/
         .scrollbarHide::-webkit-scrollbar {
             display: none
@@ -36,13 +48,16 @@
             display: block
         }
 
-
+		.container {
+			margin: 20px auto;
+			position: relative;
+			width: 80%;
+			border: 1px solid #333;
+		}
 		.viewpoint {
             position: relative;
-			margin: 20px auto;
-			width: 380px;
+			width: 100%;
 			height: 300px;
-			border: 1px solid #333;
 			overflow-y:auto;
 		}
 		.canvas {
@@ -73,7 +88,7 @@
 			position: absolute;
             background-color: #666;
 		}
-		.viewpoint:hover .scrollbar {
+		.container:hover .scrollbar {
             opacity: 1;
         }
 		.scrollbar:hover .scrollbar-track {
@@ -114,24 +129,30 @@
 	</style>
 </head>
 <body>
-    
-    <!-- viewpoint -->
-	<div class="viewpoint">
-        <!-- canvas -->
-        <div class="canvas"></div>
-        <!-- scrollbar -->
-        <!-- <div class="y-scrollbar">
-			<div class="y-scrollbar-track"></div>
-			<div class="y-scrollbar-thumb"></div>
-		</div> -->
-    </div>
+    <div style="height: 500px;"></div>
+    <div class="wrapper">
+		<div class="container">
+			<iframe class="resizer" frameborder="0"></iframe>
+			<!-- viewpoint -->
+			<div class="viewpoint">
+				<!-- canvas -->
+				<div class="canvas"></div>
+				<!-- scrollbar -->
+				<!-- <div class="y-scrollbar">
+					<div class="y-scrollbar-track"></div>
+					<div class="y-scrollbar-thumb"></div>
+				</div> -->
+			</div>
+		</div>
+	</div>
     
     <div class="log"></div>
     
 	<script src="jquery.js"></script>
+	<script src="lodash/4.17.5/lodash.min.js"></script>
 	<script src="scrollbar.js"></script>
 	<script>
-		var total = 19;
+		var total = 919;
 		var lineHeight = 28;
 		var viewpointHeight = $('.viewpoint').height();
 		var data = new Array(total).fill(0).map((d, i) => ({ v: i }));
@@ -140,8 +161,8 @@
 
 		$('.canvas').height(contentHeight);
 
-		var yScroll = ScrollBar.createYBar($('.viewpoint'));
-		var xScroll = ScrollBar.createXBar($('.viewpoint'));
+		var yScroll = ScrollBar.createYBar($('.viewpoint'), $('.container'));
+		var xScroll = ScrollBar.createXBar($('.viewpoint'), $('.container'));
 
 		var buffer = {
 			start: 0,
@@ -230,6 +251,7 @@
 				var domain = buffer.domain;
 				dataView.render(1, domain);
 				xScroll.update();
+				yScroll.update();
 			},
 			fullNodes() {
 				return dataView.nodeList.length >= 3 * limit;
@@ -315,7 +337,12 @@
 		function log(...args) {
 			$log.innerHTML = args;
         }
-        
+		
+		$('.resizer')[0].contentWindow.onresize = function() {
+			console.log('resize');
+			xScroll.update();
+			yScroll.update();
+		};
         
 	</script>
 </body>
