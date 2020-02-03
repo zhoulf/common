@@ -1,6 +1,7 @@
 /* Scrollbar */        
 const THUMB_MIN_SIZE = 30;
 const BAR_WIDTH = 14;
+const ROLLING_RATE = 20;
 const ScrollBar = function() {};
 
 ScrollBar.createYBar = function(domEl, container) {
@@ -60,7 +61,7 @@ function initYAxisEvent($rel, domEl, _bar) {
             var offset = $rel.$scrollbarTrack.offset();
             var _y = evt.offsetY;
 
-            var done = _.debounce((t) => domEl.scrollTop(t), 50);
+            var done = _.debounce((t) => domEl.scrollTop(t), ROLLING_RATE);
 
             $(document).on('mousemove.scrollbar', function(evt) {
                 isDragging = true;
@@ -70,7 +71,7 @@ function initYAxisEvent($rel, domEl, _bar) {
                 console.log(evt.pageY, evt.pageY - offset.top);
                 
                 // var scrollBarOffsetTop = (evt.pageY + DOCScrollTop - _bar.thumbHeight)/ _bar.viewpointHeight * _bar.contentHeight;
-                var scrollBarOffsetTop = (evt.pageY - offset.top)/ _bar.viewpointHeight * _bar.contentHeight;
+                var scrollBarOffsetTop = (evt.pageY - offset.top)/ (_bar.viewpointHeight - _bar.thumbHeight) * (_bar.contentHeight - _bar.viewpointHeight);
                 // var scrollBarOffsetTop = evt.pageY - offset.top;
                 done(scrollBarOffsetTop);
                 
