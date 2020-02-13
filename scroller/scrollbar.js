@@ -10,19 +10,20 @@ ScrollBar.createYBar = function(domEl, container) {
     _bar.$rel = createLayer({ axis: 'y'});
     container.append(_bar.$rel.$scrollbar);
 
-    _bar.viewpointHeight = domEl.height();
-    _bar.contentHeight = domEl[0].scrollHeight;
-    _bar.thumbHeight = calcThumbSize(_bar.viewpointHeight, _bar.contentHeight);
-    
-    _bar.$rel.$scrollbarThumb.height(_bar.thumbHeight);
+    var update = function() {
+        _bar.viewpointHeight = domEl.height();
+        _bar.contentHeight = domEl[0].scrollHeight;
+        _bar.thumbHeight = calcThumbSize(_bar.viewpointHeight, _bar.contentHeight);
+        _bar.$rel.$scrollbarThumb.height(_bar.thumbHeight);
+
+        _bar.viewpointHeight == _bar.thumbHeight ? _bar.$rel.$scrollbar.hide() : _bar.$rel.$scrollbar.show();
+    };
+
+    update();
     initYAxisEvent(_bar.$rel, domEl, _bar);
 
     return {
-        update: function() {
-            _bar.viewpointHeight = domEl.height();
-            _bar.thumbHeight = calcThumbSize(_bar.viewpointHeight, _bar.contentHeight);
-            _bar.$rel.$scrollbarThumb.height(_bar.thumbHeight);
-        },
+        update: update,
         destory: destory(_bar)
     };
 }
@@ -30,9 +31,9 @@ ScrollBar.createYBar = function(domEl, container) {
 
 function createLayer({ axis }) {
     let type = axis ? axis : 'y';
-    let $scrollbar = $('<div/>').addClass(`${type}-scrollbar scrollbar`);
-    let $scrollbarTrack = $('<div/>').addClass(`scrollbar-track`);
-    let $scrollbarThumb = $('<div/>').addClass(`scrollbar-thumb`);
+    let $scrollbar = $('<div/>').addClass(type+'-scrollbar scrollbar');
+    let $scrollbarTrack = $('<div/>').addClass('scrollbar-track');
+    let $scrollbarThumb = $('<div/>').addClass('scrollbar-thumb');
 
     $scrollbar.append($scrollbarTrack).append($scrollbarThumb);
 
@@ -58,12 +59,16 @@ function initYAxisEvent($rel, domEl, _bar) {
     
     $rel.$scrollbarThumb
         .on('mousedown', function(evt) {
-            var DOCScrollTop = document.body.scrollTop || document.documentElement.scrollTop;
+            // var DOCScrollTop = document.body.scrollTop || document.documentElement.scrollTop;
             var offset = $rel.$scrollbarTrack.offset();
             var paddingY = evt.offsetY;
             var lastY = 0;
 
-            var done = _.debounce((t) => domEl.scrollTop(t), ROLLING_RATE);
+            var done = _.debounce(function(t) { domEl.scrollTop(t); }, ROLLING_RATE);
+
+            var viewpointHeight = domEl.height();
+            var contentHeight = domEl[0].scrollHeight;
+            var thumbHeight = calcThumbSize(viewpointHeight, contentHeight);
 
             $(document).on('mousemove.scrollbar', function(evt) {
                 isDragging = true;
@@ -72,9 +77,8 @@ function initYAxisEvent($rel, domEl, _bar) {
 
                 // console.log(evt.pageY, offset.top, paddingY);
                 
-                // var scrollBarOffsetTop = (evt.pageY + DOCScrollTop - _bar.thumbHeight)/ _bar.viewpointHeight * _bar.contentHeight;
-                var scrollBarOffsetTop = y/ (_bar.viewpointHeight - _bar.thumbHeight) * (_bar.contentHeight - _bar.viewpointHeight);
-                if (Math.abs(y - lastY) * SCROLL_SPEED > _bar.viewpointHeight * _bar.viewpointHeight/ _bar.contentHeight) {
+                var scrollBarOffsetTop = y/ (viewpointHeight - thumbHeight) * (contentHeight - viewpointHeight);
+                if (Math.abs(y - lastY) * SCROLL_SPEED > viewpointHeight * viewpointHeight/ contentHeight) {
                     console.log('debounce');
                     done(scrollBarOffsetTop);  
                 } else {
@@ -86,7 +90,7 @@ function initYAxisEvent($rel, domEl, _bar) {
                 
                 // var thumbOffsetTop = (domEl[0].scrollTop)/ (_bar.contentHeight - _bar.viewpointHeight) * (_bar.viewpointHeight - _bar.thumbHeight);
                 y = y < 0 ? 0 : y;
-                y = y > _bar.viewpointHeight - _bar.thumbHeight ? _bar.viewpointHeight - _bar.thumbHeight : y;
+                y = y > viewpointHeight - thumbHeight ? viewpointHeight - thumbHeight : y;
 
                 $rel.$scrollbarThumb.css('top', y);
 
@@ -101,7 +105,9 @@ function initYAxisEvent($rel, domEl, _bar) {
         });
     
     $rel.$scrollbarTrack.on('mousedown', function(evt) {
-        var top = (evt.pageY - $(this).offset().top)/ _bar.viewpointHeight * _bar.contentHeight;
+        var viewpointHeight = domEl.height();
+        var contentHeight = domEl[0].scrollHeight;
+        var top = (evt.pageY - $(this).offset().top)/ viewpointHeight * contentHeight;
         domEl.scrollTop(top);
     });
 }
@@ -113,21 +119,19 @@ ScrollBar.createXBar = function(domEl, container) {
     _bar.$rel = createLayer({ axis: 'x'});
     container.append(_bar.$rel.$scrollbar);
 
-    _bar.viewpointWidth = domEl.width();
-    // _bar.viewpointHeight = domEl.height();
-    _bar.contentWidth = domEl[0].scrollWidth;
-    _bar.thumbWidth = calcThumbSize(_bar.viewpointWidth, domEl[0].scrollWidth);
-    
-    _bar.$rel.$scrollbarThumb.width(_bar.thumbWidth);
+    var update = function() {
+        _bar.viewpointWidth = domEl.width();
+        _bar.contentWidth = domEl[0].scrollWidth;
+        _bar.thumbWidth = calcThumbSize(_bar.viewpointWidth, domEl[0].scrollWidth);
+        _bar.$rel.$scrollbarThumb.width(_bar.thumbWidth);
+        _bar.viewpointWidth == _bar.thumbWidth ? _bar.$rel.$scrollbar.hide() : _bar.$rel.$scrollbar.show();
+    };
 
+    update();
     initXAxisEvent(_bar.$rel, domEl, _bar);
 
     return {
-        update: function() {
-            _bar.viewpointWidth = domEl.width();
-            _bar.thumbWidth = calcThumbSize(_bar.viewpointWidth, domEl[0].scrollWidth);
-            _bar.$rel.$scrollbarThumb.width(_bar.thumbWidth);
-        },
+        update: update,
         destory: destory(_bar)
     };
 }
@@ -135,35 +139,44 @@ ScrollBar.createXBar = function(domEl, container) {
 function initXAxisEvent($rel, domEl, _bar) {
     var isDragging = false;
     domEl.on('scroll.xbar', function(evt) {
-        var scrollLeft = this.scrollLeft;
-        var thumbWidth = calcThumbSize(_bar.viewpointWidth, domEl[0].scrollWidth); // TODO
-        
         if (!isDragging) {
             // 滑块相对顶部距离/ (一屏宽度 - 滑块宽度) = 距离左边值/ (实际内容宽度 - 一屏宽度)
-            var thumbOffsetLeft = scrollLeft/ (domEl[0].scrollWidth - _bar.viewpointWidth) * (_bar.viewpointWidth - thumbWidth);
+            var thumbOffsetLeft = this.scrollLeft/ (domEl[0].scrollWidth - _bar.viewpointWidth) * (_bar.viewpointWidth - _bar.thumbWidth);
             $rel.$scrollbarThumb.css('left', thumbOffsetLeft);
         }
     });
 
     $rel.$scrollbarThumb
         .on('mousedown', function(evt) {
-            let contentWidth = domEl[0].scrollWidth;
-            var thumbWidth = calcThumbSize(_bar.viewpointWidth, domEl[0].scrollWidth);
             // var DOCScrollLeft = document.body.scrollLeft || document.documentElement.scrollLeft;
             var offset = $rel.$scrollbarTrack.offset();
             var paddingX = evt.offsetX;
+            var lastX = 0;
+
+            var done = _.debounce(function(t) { domEl.scrollLeft(t); }, ROLLING_RATE);
+
+            var viewpointWidth = domEl.width();
+            var contentWidth = domEl[0].scrollWidth;
+            var thumbWidth = calcThumbSize(viewpointWidth, contentWidth);
+            
 
             $(document).on('mousemove.scrollbar', function(evt) {
                 isDragging = true;
                 var x = evt.pageX - offset.left - paddingX;
 
-                var scrollBarOffsetLeft = x/ (_bar.viewpointWidth - thumbWidth) * (contentWidth - _bar.viewpointWidth);
-                domEl.scrollLeft(scrollBarOffsetLeft);
+                var scrollBarOffsetLeft = x/ (viewpointWidth - thumbWidth) * (contentWidth - viewpointWidth);
+                if (Math.abs(x - lastX) * SCROLL_SPEED > viewpointWidth * viewpointWidth/ contentWidth) {
+                    console.log('debounce');
+                    done(scrollBarOffsetLeft);  
+                } else {
+                    console.log(Math.abs(x - lastX), 'scrollLeft');
+                    domEl.scrollLeft(scrollBarOffsetLeft);
+                }
 
-                // var thumbOffsetLeft = domEl[0].scrollLeft/ (domEl[0].scrollWidth - _bar.viewpointWidth) * (_bar.viewpointWidth - thumbWidth);
-                // $rel.$scrollbarThumb.css('left', thumbOffsetLeft);
+                lastX = x;
+
                 x = x < 0 ? 0 : x;
-                x = x > _bar.viewpointWidth - thumbWidth ? _bar.viewpointWidth - thumbWidth : x;
+                x = x > viewpointWidth - thumbWidth ? viewpointWidth - thumbWidth : x;
 
                 $rel.$scrollbarThumb.css('left', x);
     
@@ -178,8 +191,9 @@ function initXAxisEvent($rel, domEl, _bar) {
         });
     
     $rel.$scrollbarTrack.on('mousedown', function(evt) {
-        var thumbWidth = calcThumbSize(_bar.viewpointWidth, domEl[0].scrollWidth);
-        var left = (evt.clientX - thumbWidth)/ _bar.viewpointWidth * domEl[0].scrollWidth;
+        var viewpointWidth = domEl.width();
+        var contentWidth = domEl[0].scrollWidth;
+        var left = (evt.pageX - $(this).offset().left)/ viewpointWidth * contentWidth;
         domEl.scrollLeft(left);
     });
 }
