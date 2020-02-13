@@ -1,0 +1,63 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>format date</title>
+    <style>
+    #start_time {
+        height: 36px;
+        text-align: center;
+        font-size: 17px;
+    }
+    </style>
+</head>
+<body>
+    <input id="start_time" type="text" value="2020-02-13">
+
+    <script>
+        var $input = document.querySelector('#start_time');
+        var so = {};
+
+        var originVal = '';
+        $input.addEventListener('input', function(evt) {
+            var oriArr = originVal.split('');
+            var i = this.selectionStart - 1;
+
+            i === 4 && i++;
+            i === 7 && i++;
+
+            if (i > 9) {
+                this.value = originVal;
+                return;
+            }
+            
+            oriArr.splice(i, 1, this.value.charAt(this.selectionStart - 1));
+            originVal = this.value = oriArr.join('');
+
+            i++;
+            this.setSelectionRange(i, i);
+
+        });
+
+        $input.addEventListener('mouseup', function(evt) {
+            originVal = this.value;
+
+            var i = this.selectionStart;
+            if (i < 4) {
+                this.setSelectionRange(0, 4);
+            } 
+            else if (i < 7) {
+                this.setSelectionRange(5, 7);
+                $input.setSelectionRange(5,7)
+            }
+            else {
+                this.setSelectionRange(8, 10);
+            }
+        });
+
+
+
+    </script>
+</body>
+</html>
