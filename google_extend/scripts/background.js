@@ -1,4 +1,5 @@
 // 监听来自content-script的消息
+// https://developer.chrome.com/extensions/tabs#method-create
 chrome.runtime.onMessage.addListener(function(request, sender, sendResponse)
 {
 	console.log('收到来自zlf content-script的消息：', request);
