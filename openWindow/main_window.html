@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>main</title>
+</head>
+<body>
+    <p>注：需要有域名或localhost下访问</p>
+    <ul>
+        <li><a href="/openWindow/child_window.html" target="child_window" rel="noopener noreferrer">新开进程方式:如何创建名称为child_window的窗口？</a></li>        
+        <li><span onclick="openWin()">共享进程方式</span></li>
+        <li><a href="/openWindow/child_window.html" target="child_window">共享进程方式</a></li>
+    </ul>
+
+    <script>
+        window.mainObj = { name: 'parent', data: [{name: 'a', value: 1}]};
+        window.sessionStorage.setItem('mainObj', JSON.stringify(window.mainObj));
+        var childWin;
+        function openWin() {
+            childWin = window.open('/openWindow/child_window.html', 'child_window', '', true);
+            childWin.opener = null;
+            childWin.location.href  = 'http://localhost/openWindow/child_window.html';
+        }
+    </script>
+
+
+</body>
+</html>

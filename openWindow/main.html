@@ -20,9 +20,11 @@
     <script>
         window.mainObj = { name: 'parent', data: [{name: 'a', value: 1}]};
         window.sessionStorage.setItem('mainObj', JSON.stringify(window.mainObj));
+        var childWin;
         function openWin() {
-            var childWin = window.open('/openWindow/child.html');
-                childWin.opener = null;
+            childWin = window.open('/openWindow/child.html', 'myWindow', '', true);
+            // childWin.opener = null;
+
         }
     </script>
 
@@ -39,7 +41,7 @@
         element.click();
 
         document.body.removeChild(element);
-        }
+    }
     </script>
 </body>
 </html>

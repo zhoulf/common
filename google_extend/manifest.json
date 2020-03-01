@@ -1,0 +1,37 @@
+{
+    "name": "Hello Extensions",
+    "description" : "Hello world Extension",
+    "version": "1.0",
+    "manifest_version": 2,
+    "web_accessible_resources": ["scripts/inject.js"],
+    "browser_action": {
+        "default_popup": "hello.html",
+        "default_icon": "hello_extension.png"
+    },
+    "commands": {
+        "_execute_browser_action": {
+          "suggested_key": {
+            "default": "Ctrl+Shift+F",
+            "mac": "MacCtrl+Shift+F"
+          },
+          "description": "Opens hello.html"
+        }
+    },
+    "permissions": [
+        "tabs",
+        "storage",
+        "http://*/*",
+        "https://*/*"
+    ],
+    "content_scripts": [
+        {
+            "matches": ["http://*/*","https://*/*"],
+            "js": ["scripts/contentscript.js"],
+            "run_at": "document_start",
+            "all_frames": false
+        }
+    ],
+    "background":{
+        "scripts": ["scripts/background.js"]
+    }
+  }
