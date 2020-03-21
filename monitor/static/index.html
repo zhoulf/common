@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>学习koa</title>
+    <link href="index.css" rel="stylesheet">
+  </head>
+  <body>
+    <h1 class="header-wrap">run 起来</h1>
+
+    <button onclick="sendData()">send data</button>
+
+    <div id="msg"></div>
+    <script>
+    function sendData() {
+      var data = { username: 'example' };
+
+      fetch('/log', {
+        method: 'POST', // or 'PUT'
+        body: JSON.stringify(data), // data can be `string` or {object}!
+        headers: new Headers({
+          'Content-Type': 'application/json'
+        })
+      })
+      .then(function(response) {
+          return response.json();
+      })
+      .then(function(myJson) {
+          console.log(myJson);
+          document.querySelector('#msg').innerHTML = JSON.stringify(myJson);
+      });
+    }
+
+    window.onbeforeunload=function(e){   
+        sendData(); 
+    　　var e = window.event||e;  
+    　　e.returnValue=("确定离开当前页面吗？");
+    } 
+    </script>
+  </body>
+</html>
