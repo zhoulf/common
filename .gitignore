@@ -29,3 +29,4 @@ chrome-plugin-demo-master/simple-chrome-plugin-demo/icon.png
 chrome-plugin-demo-master/simple-chrome-plugin-demo/popup.html
 chrome-plugin-demo-master/simple-chrome-plugin-demo/popup.js
 monitor/node_modules/.bin/is-ci
+monitor/node_modules/*
